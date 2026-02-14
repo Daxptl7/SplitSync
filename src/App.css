@@ -71,7 +71,7 @@ section {
       align-items: center;
       gap: 1rem;
       i {
-        color: red;
+        color: #00f3ff;
         font-size: 1.2rem;
       }
     }
@@ -146,7 +146,7 @@ section {
 
   .first-line {
     width: 40rem;
-    background-color: rgba(255, 0, 0, 0.472);
+    background-color: rgba(0, 243, 255, 0.472);
     height: 1.8px;
     position: absolute;
     transform: rotate(45deg) translate(-24rem, -12rem);
@@ -154,7 +154,7 @@ section {
 
   .second-line {
     width: 15rem;
-    background-color: rgba(255, 0, 0, 0.472);
+    background-color: rgba(157, 0, 255, 0.472);
     height: 1.8px;
     position: absolute;
     transform: rotate(-45deg) translate(65rem, 23rem);
@@ -194,18 +194,18 @@ section {
   }
 }
 
-main:has(#section-2 .title:hover) #canvas-elem::after{
+main:has(#section-2 .title:hover) #canvas-elem::after {
   opacity: 0;
 }
 
-.images{
+.images {
   position: fixed;
   height: 100%;
   width: 100%;
   top: 0;
   left: 0;
 
-  img{
+  img {
     height: 100%;
     width: 100%;
     object-fit: cover;
@@ -213,66 +213,64 @@ main:has(#section-2 .title:hover) #canvas-elem::after{
     top: 0;
     left: 0;
     opacity: 0;
+    filter: blur(8px);
     transition: all 0.3s linear;
   }
 }
 
-main:has(#section-2 .title[img-title="tomorrowland"]:hover) #tomorrowland{
+main:has(#section-2 .title[img-title="genesis-block"]:hover) #genesis-block {
   opacity: 1;
   background-color: rgb(10, 9, 43);
 }
-main:has(#section-2 .title[img-title="navy-pier"]:hover) #navy-pier{
+main:has(#section-2 .title[img-title="smart-contracts"]:hover)
+  #smart-contracts {
   opacity: 1;
   background-color: rgb(10, 9, 43);
 }
-main:has(#section-2 .title[img-title="msi-chicago"]:hover) #msi-chicago{
+main:has(#section-2 .title[img-title="defi-ecosystem"]:hover) #defi-ecosystem {
   opacity: 1;
   background-color: rgb(10, 9, 43);
 }
-main:has(#section-2 .title[img-title="phone"]:hover) #phone{
+main:has(#section-2 .title[img-title="consensus"]:hover) #consensus {
   opacity: 1;
   background-color: rgb(10, 9, 43);
 }
-main:has(#section-2 .title[img-title="kikk"]:hover) #kikk{
+main:has(#section-2 .title[img-title="cryptography"]:hover) #cryptography {
   opacity: 1;
   background-color: rgba(14, 10, 132, 0.669);
 }
-main:has(#section-2 .title[img-title="kennedy"]:hover) #kennedy{
+main:has(#section-2 .title[img-title="web3-arch"]:hover) #web3-arch {
   opacity: 1;
   background-color: rgb(10, 9, 43);
 }
-main:has(#section-2 .title[img-title="opera"]:hover) #opera{
-  opacity: 1;
-  background-color: rgba(121, 14, 14, 0.698);
-}
 
-#section-3{
+#section-3 {
   padding-block: 10rem;
   padding-top: 10rem;
   position: relative;
   z-index: 0;
 
   .top,
-  .bottom{
+  .bottom {
     display: flex;
     width: 100%;
   }
 
   .left,
-  .right{
+  .right {
     width: 50%;
   }
 
-  .top .left small{
+  .top .left small {
     opacity: 0.5;
   }
 
-  .top .left{
+  .top .left {
     display: flex;
     justify-content: flex-end;
     align-items: center;
 
-    h3{
+    h3 {
       padding-right: 10rem;
       font-size: 2.7rem;
       white-space: nowrap;
@@ -281,15 +279,15 @@ main:has(#section-2 .title[img-title="opera"]:hover) #opera{
     }
   }
 
-  .bottom .right{
+  .bottom .right {
     display: flex;
     gap: 3.2rem;
 
-    div{
+    div {
       width: 50%;
     }
 
-    p{
+    p {
       opacity: 0.5;
       font-weight: 200;
       font-size: 1.1rem;
@@ -299,30 +297,30 @@ main:has(#section-2 .title[img-title="opera"]:hover) #opera{
   }
 }
 
-#section-4{
+#section-4 {
   padding-bottom: 10rem;
 
   .top,
-  .bottom{
+  .bottom {
     display: flex;
     width: 100%;
   }
 
   .left,
-  .right{
+  .right {
     width: 50%;
   }
 
-  .top .left small{
+  .top .left small {
     opacity: 0.5;
   }
 
-  .top .left{
+  .top .left {
     display: flex;
     justify-content: flex-end;
     align-items: center;
 
-    h3{
+    h3 {
       padding-right: 10rem;
       font-size: 2.7rem;
       white-space: nowrap;
@@ -331,16 +329,16 @@ main:has(#section-2 .title[img-title="opera"]:hover) #opera{
     }
   }
 
-  .bottom .right{
+  .bottom .right {
     display: flex;
     gap: 3.2rem;
     padding-right: 6rem;
 
-    div{
+    div {
       width: 50%;
     }
 
-    p{
+    p {
       opacity: 0.5;
       font-weight: 200;
       font-size: 1.1rem;
