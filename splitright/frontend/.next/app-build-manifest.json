@@ -1,16 +1,31 @@
 {
   "pages": {
-    "/page": [
+    "/(app)/profile/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/css/app/page.css",
-      "static/chunks/app/page.js"
+      "static/chunks/app/(app)/profile/page.js"
+    ],
+    "/(app)/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(app)/layout.js"
     ],
     "/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
+    ],
+    "/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/css/app/page.css",
+      "static/chunks/app/page.js"
+    ],
+    "/(app)/expenses/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(app)/expenses/page.js"
     ],
     "/(auth)/login/page": [
       "static/chunks/webpack.js",
@@ -23,41 +38,26 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(app)/dashboard/page.js"
     ],
-    "/(app)/layout": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(app)/layout.js"
-    ],
-    "/(app)/groups/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(app)/groups/page.js"
-    ],
-    "/(app)/friends/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(app)/friends/page.js"
-    ],
     "/(auth)/signup/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/css/app/(auth)/signup/page.css",
       "static/chunks/app/(auth)/signup/page.js"
     ],
-    "/(app)/expenses/page": [
+    "/(app)/friends/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(app)/expenses/page.js"
+      "static/chunks/app/(app)/friends/page.js"
+    ],
+    "/(app)/groups/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(app)/groups/page.js"
     ],
     "/(app)/settlements/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(app)/settlements/page.js"
-    ],
-    "/(app)/profile/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(app)/profile/page.js"
     ]
   }
 }

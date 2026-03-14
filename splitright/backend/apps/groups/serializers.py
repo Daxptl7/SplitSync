@@ -12,10 +12,16 @@ class GroupMemberSerializer(serializers.ModelSerializer):
 class GroupSerializer(serializers.ModelSerializer):
     members = GroupMemberSerializer(many=True, read_only=True)
     created_by = UserSerializer(read_only=True)
+    total_spent = serializers.SerializerMethodField()
 
     class Meta:
         model = Group
-        fields = ['id', 'name', 'currency', 'created_by', 'members', 'created_at']
+        fields = ['id', 'name', 'currency', 'created_by', 'members', 'total_spent', 'created_at']
+
+    def get_total_spent(self, obj):
+        from django.db.models import Sum
+        total = Expense.objects.filter(group=obj).aggregate(Sum('total_amount'))['total_amount__sum']
+        return float(total) if total else 0.0
 
 class ExpenseSerializer(serializers.ModelSerializer):
     created_by = UserSerializer(read_only=True)
@@ -26,7 +32,7 @@ class ExpenseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Expense
-        fields = ['id', 'group', 'group_id', 'description', 'total_amount', 'split_type', 'created_by', 'date']
+        fields = ['id', 'group', 'group_id', 'description', 'total_amount', 'split_type', 'split_data', 'created_by', 'date']
 
 class SettlementUserSerializer(serializers.ModelSerializer):
     """Lightweight user serializer for settlement display."""

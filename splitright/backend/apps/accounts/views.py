@@ -10,11 +10,81 @@ class CurrentUserView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        from .models import UserProfile
         user = request.user
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        
         return Response({
             "uid": user.firebase_uid,
             "email": user.firebase_email,
             "name": user.firebase_name,
+            "expenditure_limit": float(profile.expenditure_limit) if profile.expenditure_limit else None,
+        })
+        
+    def patch(self, request):
+        from .models import UserProfile
+        user = request.user
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        
+        limit = request.data.get('expenditure_limit')
+        if limit is not None:
+            if limit == "":
+                profile.expenditure_limit = None
+            else:
+                profile.expenditure_limit = Decimal(str(limit))
+            profile.save()
+            
+        return Response({
+            "uid": user.firebase_uid,
+            "email": user.firebase_email,
+            "name": user.firebase_name,
+            "expenditure_limit": float(profile.expenditure_limit) if profile.expenditure_limit else None,
+        })
+
+
+class ProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from .models import UserProfile
+        user = request.user
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        
+        return Response({
+            "display_name": profile.display_name or user.firebase_name,
+            "email": user.firebase_email,
+            "default_currency": profile.default_currency,
+            "upi_handle": profile.upi_handle,
+            "phone": profile.phone
+        })
+        
+    def put(self, request):
+        from .models import UserProfile
+        user = request.user
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        
+        display_name = request.data.get('display_name')
+        default_currency = request.data.get('default_currency')
+        upi_handle = request.data.get('upi_handle')
+        phone = request.data.get('phone')
+        
+        if display_name is not None:
+            profile.display_name = display_name
+        if default_currency is not None:
+            profile.default_currency = default_currency
+        if upi_handle is not None:
+            profile.upi_handle = upi_handle
+        if phone is not None:
+            profile.phone = phone
+            
+        profile.save()
+        
+        return Response({
+            "display_name": profile.display_name or user.firebase_name,
+            "email": user.firebase_email,
+            "default_currency": profile.default_currency,
+            "upi_handle": profile.upi_handle,
+            "phone": profile.phone
         })
 
 

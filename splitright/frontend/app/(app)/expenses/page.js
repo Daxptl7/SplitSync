@@ -7,7 +7,6 @@ import { useAuth } from "@/context/AuthContext";
 const SPLIT_MODES = [
   "equal",
   "percentage",
-  "custom",
   "share",
   "payer_excluded",
 ];
@@ -15,7 +14,6 @@ const SPLIT_MODES = [
 const SPLIT_LABELS = {
   equal: "Equal",
   percentage: "Percentage",
-  custom: "Custom",
   share: "Share",
   payer_excluded: "Payer Excluded",
 };
@@ -36,11 +34,19 @@ export default function ExpensesPage() {
   const [newDate, setNewDate] = useState(
     new Date().toISOString().split("T")[0],
   );
+  const [splitData, setSplitData] = useState({}); // {userId: percentage}
+
+
+  const [globalLimitData, setGlobalLimitData] = useState(null);
 
   const fetchData = async () => {
     if (!user) return;
     setLoading(true);
     try {
+      // Check limit status globally on load
+      const limitStatusRes = await api.get("/api/v1/expenses/limit_status/");
+      setGlobalLimitData(limitStatusRes.data);
+
       // Fetch Groups the user is a part of
       const groupsRes = await api.get("/api/v1/groups/");
       setGroups(groupsRes.data);
@@ -62,39 +68,111 @@ export default function ExpensesPage() {
       }
 
     } catch (err) {
-      console.error("Error fetching expenses:", err);
+      console.error("Error fetching data:", err);
     } finally {
       setLoading(false);
     }
   };
 
+  const [showRiskAlert, setShowRiskAlert] = useState(false);
+  const [highRiskUsers, setHighRiskUsers] = useState([]);
+  const [skipRiskCheck, setSkipRiskCheck] = useState(false);
+
+  const [showLimitAlert, setShowLimitAlert] = useState(false);
+  const [limitData, setLimitData] = useState(null);
+  const [skipLimitCheck, setSkipLimitCheck] = useState(false);
+
   useEffect(() => {
     fetchData();
   }, [user]);
 
-  const handleAddExpense = async (e) => {
-    e.preventDefault();
+  useEffect(() => {
+    if (selectedSplit === "percentage" && newGroupId) {
+      const group = groups.find(g => g.id === parseInt(newGroupId));
+      if (group && group.members) {
+        const count = group.members.length;
+        const equalPct = (100 / count).toFixed(2);
+        const initial = {};
+        group.members.forEach(m => {
+          initial[m.user.id] = equalPct;
+        });
+        setSplitData(initial);
+      }
+    } else {
+      setSplitData({});
+    }
+  }, [selectedSplit, newGroupId, groups]);
+
+  const validateAndAddExpense = async (e) => {
+    if (e) e.preventDefault();
     setActionStatus("");
     if (!user) return;
 
+    // First check personal expenditure limit
+    if (!skipLimitCheck) {
+      try {
+        const limitRes = await api.post("/api/v1/expenses/check_limit/", {
+          group_id: newGroupId,
+          amount: parseFloat(newAmount),
+          split_type: selectedSplit,
+          split_data: splitData
+        });
+        
+        if (limitRes.data && limitRes.data.limit_exceeded) {
+          setLimitData(limitRes.data);
+          setShowLimitAlert(true);
+          return; // Stop and wait for user confirmation
+        }
+      } catch (err) {
+        console.error("Error checking expenditure limit:", err);
+      }
+    }
+
+    // Then check group risk
+    if (!skipRiskCheck) {
+      try {
+        const riskRes = await api.get(`/api/v1/settlements/group_risk/?group_id=${newGroupId}`);
+        const risks = riskRes.data || [];
+        // TEMPORARY FOR TESTING: Force alert to show for anyone by setting threshold to -1
+        const highRisk = risks.filter(r => r.risk_score > -1);
+        
+        if (highRisk.length > 0) {
+          setHighRiskUsers(highRisk);
+          setShowRiskAlert(true);
+          return; // Stop and wait for user confirmation
+        }
+      } catch (err) {
+        console.error("Error fetching risk scores:", err);
+      }
+    }
+
+    // Proceed to create expense
+    await createExpense();
+  };
+
+  const createExpense = async () => {
     try {
       await api.post("/api/v1/expenses/", {
         group_id: newGroupId,
         description: newDesc,
         total_amount: parseFloat(newAmount),
         split_type: selectedSplit,
+        split_data: splitData,
         date: newDate,
       });
       
       setShowAdd(false);
+      setShowRiskAlert(false);
+      setSkipRiskCheck(false);
       setNewDesc("");
       setNewAmount("");
       setSelectedSplit("equal");
-      setActionStatus("Expense added successfully!");
+      setSplitData({});
+      setActionStatus("✅ Expense added successfully!");
       fetchData();
     } catch (err) {
-      console.error(err);
-      setActionStatus("Error adding expense");
+      console.error("Create expense error:", err.response?.data || err.message);
+      setActionStatus("❌ Error adding expense: " + (err.response?.data?.error || "Check your inputs"));
     }
   };
 
@@ -142,6 +220,16 @@ export default function ExpensesPage() {
         </button>
       </div>
 
+      {globalLimitData?.limit_exceeded && (
+        <div className="p-4 mb-6 bg-red-50 text-red-700 rounded-xl font-medium border border-red-200 flex items-start gap-3 animate-slide-up">
+          <i className="ri-error-warning-fill text-xl mt-0.5 text-red-500"></i>
+          <div>
+            <h4 className="font-bold text-red-800 text-sm mb-1">Monthly Expenditure Limit Exceeded</h4>
+            <p className="text-xs text-red-700">You have currently spent ₹{globalLimitData?.current_spent?.toFixed(2)} this month, which is over your set limit of ₹{globalLimitData?.limit?.toFixed(2)}.</p>
+          </div>
+        </div>
+      )}
+
       {actionStatus && (
         <div className="p-4 mb-6 bg-brand-50 text-brand-700 rounded-xl font-medium border border-brand-100">
           {actionStatus}
@@ -151,7 +239,7 @@ export default function ExpensesPage() {
       {/* Add Expense Form */}
       {showAdd && (
         <form
-          onSubmit={handleAddExpense}
+          onSubmit={validateAndAddExpense}
           className="glass-card p-6 mb-6 animate-slide-up"
         >
           <h3 className="text-lg font-semibold text-surface-800 mb-4">
@@ -243,18 +331,157 @@ export default function ExpensesPage() {
             </div>
           </div>
 
-          <div className="flex gap-3">
-            <button type="submit" className="btn-primary text-sm">
-              Save Expense
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowAdd(false)}
-              className="btn-secondary text-sm"
-            >
-              Cancel
-            </button>
-          </div>
+          {/* Percentage Split UI */}
+          {selectedSplit === "percentage" && (
+            <div className="mb-6 p-4 bg-surface-50 rounded-xl border border-surface-200">
+              <h4 className="text-sm font-bold text-surface-800 mb-3 flex items-center justify-between">
+                Member Percentages
+                <span className={`text-xs ${Object.values(splitData).reduce((a, b) => a + (parseFloat(b) || 0), 0) === 100 ? 'text-emerald-600' : 'text-rose-500'}`}>
+                  Sum: {Object.values(splitData).reduce((a, b) => a + (parseFloat(b) || 0), 0).toFixed(1)}% / 100%
+                </span>
+              </h4>
+              <div className="space-y-3">
+                {groups.find(g => g.id === parseInt(newGroupId))?.members.map(m => (
+                  <div key={m.user.id} className="flex items-center justify-between gap-4">
+                    <span className="text-xs font-medium text-surface-600 truncate flex-1">
+                      {m.user.first_name || m.user.email.split('@')[0]}
+                    </span>
+                    <div className="flex items-center gap-2 w-24">
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        value={splitData[m.user.id] || ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setSplitData(prev => ({ ...prev, [m.user.id]: val }));
+                        }}
+                        placeholder="0"
+                        className="w-full px-2 py-1.5 rounded-lg border border-surface-200 focus:border-brand-400 outline-none text-xs text-right"
+                      />
+                      <span className="text-xs font-bold text-surface-400">%</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {Object.values(splitData).reduce((a, b) => a + (parseFloat(b) || 0), 0) !== 100 && (
+                <p className="mt-3 text-[10px] text-rose-500 font-medium">
+                  * Sum of all percentages must equal exactly 100%
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Limit Alert Block */}
+          {showLimitAlert && (
+            <div className="mb-5 p-4 bg-orange-50 border border-orange-200 rounded-xl animate-fade-in">
+              <div className="flex items-start gap-3">
+                <i className="ri-error-warning-fill text-orange-500 text-xl mt-0.5" />
+                <div className="flex-1">
+                  <h4 className="font-bold text-orange-800 text-sm mb-1">
+                    ⚠ Limit Alert: Monthly Expenditure Exceeded
+                  </h4>
+                  <p className="text-orange-700 text-xs mb-3">
+                    Your calculated share for this expense (₹{limitData?.new_share?.toFixed(2)}) plus your existing spending (₹{limitData?.current_spent?.toFixed(2)}) exceeds your monthly limit of ₹{limitData?.limit?.toFixed(2)}.
+                  </p>
+                  <div className="flex gap-2.5">
+                    <button 
+                      type="button" 
+                      onClick={() => { 
+                        setSkipLimitCheck(true); 
+                        setShowLimitAlert(false);
+                        validateAndAddExpense(); 
+                      }}
+                      className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-xs font-semibold transition-colors"
+                    >
+                      Proceed Anyway
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowLimitAlert(false);
+                        setLimitData(null);
+                      }}
+                      className="px-4 py-2 bg-white text-orange-700 hover:bg-orange-50 border border-orange-200 rounded-lg text-xs font-semibold transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Risk Alert Block */}
+          {showRiskAlert && (
+            <div className="mb-5 p-4 bg-orange-50 border border-orange-200 rounded-xl animate-fade-in">
+              <div className="flex items-start gap-3">
+                <i className="ri-error-warning-fill text-orange-500 text-xl mt-0.5" />
+                <div className="flex-1">
+                  <h4 className="font-bold text-orange-800 text-sm mb-1">
+                    ⚠ Risk Alert: High probability of delayed settlement
+                  </h4>
+                  <p className="text-orange-700 text-xs mb-3">
+                    You are extending money to users with a history of poor settlement in this group:
+                  </p>
+                  <div className="space-y-2 mb-4">
+                    {highRiskUsers.map(u => (
+                      <div key={u.user_id} className="bg-white/60 p-2.5 rounded-lg text-xs text-orange-800 border border-orange-100">
+                        <strong className="block mb-0.5">{u.name} — Score: {u.risk_score} (High Risk)</strong>
+                        <span>Reason: {u.reason}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2.5">
+                    <button 
+                      type="button" 
+                      onClick={() => { 
+                        setSkipRiskCheck(true); 
+                        setShowRiskAlert(false);
+                        validateAndAddExpense(); 
+                      }}
+                      className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-xs font-semibold transition-colors"
+                    >
+                      Proceed Anyway
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowRiskAlert(false)}
+                      className="px-4 py-2 bg-white text-orange-700 hover:bg-orange-50 border border-orange-200 rounded-lg text-xs font-semibold transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!showRiskAlert && !showLimitAlert && (
+            <div className="flex gap-3">
+              <button 
+                type="submit" 
+                disabled={selectedSplit === 'percentage' && Object.values(splitData).reduce((a, b) => a + (parseFloat(b) || 0), 0) !== 100}
+                className="btn-primary text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Save Expense
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAdd(false);
+                  setShowRiskAlert(false);
+                  setSkipRiskCheck(false);
+                  setShowLimitAlert(false);
+                  setSkipLimitCheck(false);
+                }}
+                className="btn-secondary text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
         </form>
       )}
 

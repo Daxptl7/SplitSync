@@ -1,7 +1,8 @@
 {
-  "/(auth)/login/page": "app/(auth)/login/page.js",
-  "/(app)/expenses/page": "app/(app)/expenses/page.js",
+  "/(app)/dashboard/page": "app/(app)/dashboard/page.js",
   "/(app)/groups/page": "app/(app)/groups/page.js",
+  "/(app)/friends/page": "app/(app)/friends/page.js",
+  "/(app)/profile/page": "app/(app)/profile/page.js",
   "/(app)/settlements/page": "app/(app)/settlements/page.js",
-  "/(app)/dashboard/page": "app/(app)/dashboard/page.js"
+  "/(app)/expenses/page": "app/(app)/expenses/page.js"
 }

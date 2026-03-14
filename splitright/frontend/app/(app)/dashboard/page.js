@@ -7,6 +7,7 @@ import api from "@/lib/api";
 
 export default function DashboardPage() {
   const [summary, setSummary] = useState(null);
+  const [globalLimitData, setGlobalLimitData] = useState(null);
   const [loading, setLoading] = useState(true);
   const cardsRef = useRef(null);
   const router = useRouter();
@@ -14,8 +15,12 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        const res = await api.get("/api/v1/auth/dashboard/");
-        setSummary(res.data);
+        const [dashRes, limitStatusRes] = await Promise.all([
+          api.get("/api/v1/auth/dashboard/"),
+          api.get("/api/v1/expenses/limit_status/")
+        ]);
+        setSummary(dashRes.data);
+        setGlobalLimitData(limitStatusRes.data);
       } catch (err) {
         console.error("Dashboard fetch error:", err);
       } finally {
@@ -146,6 +151,17 @@ export default function DashboardPage() {
           Welcome back! Here&apos;s your expense overview.
         </p>
       </div>
+
+      {/* Global Limit Banner */}
+      {globalLimitData?.limit_exceeded && (
+        <div className="p-4 mb-6 bg-red-50 text-red-700 rounded-xl font-medium border border-red-200 flex items-start gap-3 animate-slide-up">
+          <i className="ri-error-warning-fill text-xl mt-0.5 text-red-500"></i>
+          <div>
+            <h4 className="font-bold text-red-800 text-sm mb-1">Monthly Expenditure Limit Exceeded</h4>
+            <p className="text-xs text-red-700">You have currently spent ₹{globalLimitData?.current_spent?.toFixed(2)} this month, which is over your set limit of ₹{globalLimitData?.limit?.toFixed(2)}.</p>
+          </div>
+        </div>
+      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">

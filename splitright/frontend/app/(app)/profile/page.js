@@ -15,6 +15,7 @@ export default function ProfilePage() {
   const [currency, setCurrency] = useState("INR");
   const [upiHandle, setUpiHandle] = useState("");
   const [phone, setPhone] = useState("");
+  const [expenditureLimit, setExpenditureLimit] = useState("");
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -29,6 +30,11 @@ export default function ProfilePage() {
         setCurrency(p.default_currency || "INR");
         setUpiHandle(p.upi_handle || "");
         setPhone(p.phone || "");
+
+        // Fetch our new expenditure limit from CurrentUserView since profile/ might not have it depending on where it resolves to
+        // Wait, earlier we added get() to CurrentUserView which maps to /api/v1/auth/me/
+        const meRes = await api.get("/api/v1/auth/me/");
+        setExpenditureLimit(meRes.data.expenditure_limit || "");
 
         setStats({
           groups: dashRes.data.total_groups || 0,
@@ -54,11 +60,17 @@ export default function ProfilePage() {
         upi_handle: upiHandle,
         phone: phone,
       });
+      
+      // Update the expenditure limit using our new patch endpoint
+      await api.patch("/api/v1/auth/me/", {
+        expenditure_limit: expenditureLimit,
+      });
+
       setProfile(res.data);
       setActionStatus("Profile updated successfully!");
     } catch (err) {
       setActionStatus(
-        err.response?.data?.detail || "Error saving profile",
+        err.response?.data?.detail || err.response?.data?.error || "Error saving profile"
       );
     } finally {
       setSaving(false);
@@ -199,6 +211,22 @@ export default function ProfilePage() {
               <p className="text-xs text-surface-400 mt-1 flex items-center gap-1">
                 <i className="ri-shield-check-line text-emerald-500" /> AES-256
                 encrypted before storage
+              </p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-surface-600 mb-1 block">
+                Monthly Expenditure Limit
+              </label>
+              <input
+                type="number"
+                value={expenditureLimit}
+                onChange={(e) => setExpenditureLimit(e.target.value)}
+                placeholder="e.g. 50000"
+                min="0"
+                className="w-full px-4 py-2.5 rounded-xl border border-surface-200 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all text-sm"
+              />
+              <p className="text-xs text-surface-400 mt-1">
+                Leave blank to disable limit
               </p>
             </div>
             <button

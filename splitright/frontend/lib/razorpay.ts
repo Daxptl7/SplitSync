@@ -3,7 +3,7 @@
  */
 export function loadRazorpayScript() {
   return new Promise((resolve) => {
-    if (typeof window !== "undefined" && window.Razorpay) {
+    if (typeof window !== "undefined" && (window as any).Razorpay) {
       resolve(true);
       return;
     }
@@ -40,7 +40,7 @@ export async function openRazorpayCheckout(orderData, onSuccess, onFailure) {
     theme: { color: "#7c3aed" },
   };
 
-  const rzp = new window.Razorpay(options);
+  const rzp = new (window as any).Razorpay(options);
   rzp.on("payment.failed", (response) => onFailure?.(response.error));
   rzp.open();
 }

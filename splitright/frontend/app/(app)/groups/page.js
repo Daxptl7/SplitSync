@@ -189,6 +189,9 @@ export default function GroupsPage() {
                       {group.members?.length || 0} members · Currency:{" "}
                       {group.currency}
                     </p>
+                    <p className="text-xs font-bold text-brand-600 mt-1">
+                      Total Spent: {new Intl.NumberFormat("en-IN", { style: "currency", currency: group.currency || "INR", maximumFractionDigits: 0 }).format(group.total_spent || 0)}
+                    </p>
                   </div>
                 </div>
                 <div className="flex flex-col gap-2 items-end">
