@@ -34,9 +34,11 @@ export default function Sidebar() {
     <aside className="flex flex-col w-64 h-screen sticky top-0 bg-white border-r border-surface-100 py-6 px-4">
       {/* Logo */}
       <Link href="/" className="flex items-center gap-2 px-3 mb-8 group">
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-600 to-accent-teal flex items-center justify-center text-white font-bold text-lg shadow-md group-hover:scale-105 transition-transform">
-          S
-        </div>
+        <img 
+          src="/d877cd1e-7c48-4499-a7a2-4c493cfdc64d-removebg-preview.png" 
+          alt="SplitRight Logo" 
+          className="h-9 w-9 object-cover rounded-xl shadow-md group-hover:scale-105 transition-transform"
+        />
         <span className="text-lg font-bold text-surface-900 tracking-tight">
           Split<span className="gradient-text">Right</span>
         </span>

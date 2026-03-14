@@ -9,7 +9,7 @@ export default function SettlementsPage() {
   const [loading, setLoading] = useState(true);
   const [actionStatus, setActionStatus] = useState("");
   const [payingId, setPayingId] = useState(null);
-  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [newSettlement, setNewSettlement] = useState({
     email: "",
     amount: "",
@@ -50,8 +50,8 @@ export default function SettlementsPage() {
         notes: newSettlement.notes,
         group_id: newSettlement.groupId,
       });
-      setActionStatus("✅ Settlement created successfully!");
-      setShowCreateForm(false);
+      setActionStatus("Settlement created successfully!");
+      setShowCreateModal(false);
       setNewSettlement({ email: "", amount: "", notes: "", groupId: groups[0]?.id || "" });
       fetchData();
     } catch (err) {
@@ -63,10 +63,10 @@ export default function SettlementsPage() {
     setActionStatus("");
     try {
       await api.post(`/api/v1/settlements/${id}/mark_completed/`);
-      setActionStatus("✅ Settlement marked as paid!");
+      setActionStatus("Settlement marked as paid!");
       fetchData();
     } catch (err) {
-      setActionStatus(err.response?.data?.error || "Error marking as paid");
+      setActionStatus("Error marking as paid: " + err.response?.data?.error);
     }
   };
 
@@ -92,10 +92,10 @@ export default function SettlementsPage() {
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
             });
-            setActionStatus("✅ Payment successful! Settlement completed.");
+            setActionStatus("Payment successful! Settlement completed.");
             fetchData();
           } catch (err) {
-            setActionStatus("❌ Payment verification failed. Contact support.");
+            setActionStatus("Payment verification failed. Contact support.");
           } finally {
             setPayingId(null);
           }
@@ -110,14 +110,14 @@ export default function SettlementsPage() {
           email: settlement.from_user?.email || "",
         },
         theme: {
-          color: "#4F46E5",
+          color: "#4F46E5", // Indigo 600
         },
       };
 
       if (typeof window !== "undefined" && window.Razorpay) {
         const rzp = new window.Razorpay(options);
         rzp.on("payment.failed", function (response) {
-          setActionStatus(`❌ Payment failed: ${response.error.description}`);
+          setActionStatus(`Payment failed: ${response.error.description}`);
           setPayingId(null);
         });
         rzp.open();
@@ -157,8 +157,8 @@ export default function SettlementsPage() {
 
   if (loading) {
     return (
-      <div className="p-8 text-center">
-        <div className="w-10 h-10 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin mx-auto" />
+      <div className="p-8 text-center flex items-center justify-center min-h-[50vh]">
+        <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto" />
       </div>
     );
   }
@@ -167,234 +167,246 @@ export default function SettlementsPage() {
   const completedCount = settlements.filter((s) => s.status === "completed").length;
 
   return (
-    <div>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-surface-900 tracking-tight">
-            Settlements
-          </h1>
-          <p className="text-surface-400 mt-1">
-            Optimized settlement plan — minimum transfers computed.
-          </p>
+    <div className="max-w-4xl mx-auto space-y-6">
+
+      {/* Header Area */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-indigo-50 rounded-full flex items-center justify-center border border-indigo-100">
+            <i className="ri-exchange-funds-line text-indigo-600 text-xl" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-surface-900 tracking-tight">
+              Settlements
+            </h1>
+            <p className="text-xs text-surface-400">Optimized cash flows. Settle up securely.</p>
+          </div>
         </div>
         <button
-          onClick={() => setShowCreateForm(!showCreateForm)}
-          className="btn-primary text-sm"
+          onClick={() => setShowCreateModal(true)}
+          className="bg-surface-900 hover:bg-black text-white px-5 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2 shadow-sm whitespace-nowrap"
         >
-          <i className="ri-add-line mr-1" />
-          {showCreateForm ? "Cancel" : "New Settlement"}
+          <i className="ri-add-line" /> New
         </button>
       </div>
 
       {actionStatus && (
-        <div className={`p-4 mb-6 rounded-xl font-medium border ${
-          actionStatus.includes("✅")
-            ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-            : actionStatus.includes("❌")
-            ? "bg-red-50 text-red-700 border-red-100"
-            : "bg-brand-50 text-brand-700 border-brand-100"
+        <div className={`p-4 rounded-xl font-medium border flex items-center gap-2 animate-slide-up ${
+          actionStatus.includes("Error") || actionStatus.includes("failed") 
+            ? "bg-red-50 text-red-700 border-red-100" 
+            : "bg-emerald-50 text-emerald-700 border-emerald-100"
         }`}>
+          <i className={actionStatus.includes("Error") || actionStatus.includes("failed") ? "ri-error-warning-line text-lg" : "ri-check-line text-lg"} />
           {actionStatus}
         </div>
       )}
 
-      {/* Create Settlement Form */}
-      {showCreateForm && (
-        <form onSubmit={handleCreateSettlement} className="glass-card p-6 mb-6 animate-slide-up">
-          <h3 className="text-lg font-semibold text-surface-800 mb-4">
-            Create Manual Settlement
-          </h3>
-          <div className="grid sm:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="text-sm font-medium text-surface-600 mb-1 block">Who owes you? (email)</label>
-              <input type="email" placeholder="friend@example.com" value={newSettlement.email}
-                onChange={(e) => setNewSettlement({ ...newSettlement, email: e.target.value })} required
-                className="w-full px-4 py-2.5 rounded-xl border border-surface-200 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all text-sm" />
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="summary-card rounded-2xl border transition-all overflow-hidden bg-white shadow-sm hover:shadow-md border-surface-200 group">
+          <div className="h-10 w-full bg-amber-500 flex items-center px-4">
+            <span className="text-white text-xs font-semibold uppercase tracking-wider">Pending</span>
+          </div>
+          <div className="p-5 flex items-end justify-between relative overflow-hidden">
+            <div className="text-4xl font-extrabold text-surface-900 z-10">{pendingCount}</div>
+            <div className="flex items-center gap-1 bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-[10px] font-bold z-10">
+              <i className="ri-time-line" /> Awaiting
             </div>
-            <div>
-              <label className="text-sm font-medium text-surface-600 mb-1 block">Amount (₹)</label>
-              <input type="number" placeholder="0.00" value={newSettlement.amount}
-                onChange={(e) => setNewSettlement({ ...newSettlement, amount: e.target.value })} required min="1"
-                className="w-full px-4 py-2.5 rounded-xl border border-surface-200 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all text-sm" />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-surface-600 mb-1 block">Group</label>
-              <select value={newSettlement.groupId}
-                onChange={(e) => setNewSettlement({ ...newSettlement, groupId: e.target.value })} required
-                className="w-full px-4 py-2.5 rounded-xl border border-surface-200 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all text-sm bg-white">
-                {groups.length === 0 ? (
-                  <option value="">No groups — create one first</option>
-                ) : (
-                  groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)
-                )}
-              </select>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-surface-600 mb-1 block">Note (optional)</label>
-              <input type="text" placeholder="e.g., Dinner split" value={newSettlement.notes}
-                onChange={(e) => setNewSettlement({ ...newSettlement, notes: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-xl border border-surface-200 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all text-sm" />
+            <div className="absolute right-0 bottom-0 opacity-10">
+              <svg width="100" height="60" viewBox="0 0 100 60"><path d="M0,60 C30,60 40,20 100,0 L100,60 Z" fill="currentColor" className="text-amber-500"/></svg>
             </div>
           </div>
-          <div className="flex gap-3">
-            <button type="submit" className="btn-primary text-sm">Create Settlement</button>
-            <button type="button" onClick={() => setShowCreateForm(false)} className="btn-secondary text-sm">Cancel</button>
+        </div>
+        
+        <div className="summary-card rounded-2xl border transition-all overflow-hidden bg-white shadow-sm hover:shadow-md border-surface-200 group">
+          <div className="h-10 w-full bg-emerald-500 flex items-center px-4">
+            <span className="text-white text-xs font-semibold uppercase tracking-wider">Settled</span>
           </div>
-        </form>
-      )}
+          <div className="p-5 flex items-end justify-between relative overflow-hidden">
+            <div className="text-4xl font-extrabold text-surface-900 z-10">{completedCount}</div>
+            <div className="flex items-center gap-1 bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full text-[10px] font-bold z-10">
+              <i className="ri-check-double-line" /> Completed
+            </div>
+            <div className="absolute right-0 bottom-0 opacity-10">
+              <svg width="100" height="60" viewBox="0 0 100 60"><path d="M0,60 C40,60 50,40 100,20 L100,60 Z" fill="currentColor" className="text-emerald-500"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      {/* Stats */}
-      <div className="glass-card p-5 mb-6 flex items-center gap-4 border border-brand-100">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center flex-shrink-0">
-          <i className="ri-flashlight-line text-white text-xl" />
+      {/* Algorithm Banner */}
+      <div className="bg-gradient-to-r from-surface-900 via-indigo-900 to-indigo-800 rounded-2xl p-5 flex items-center gap-4 text-white shadow-sm">
+        <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center shrink-0 border border-white/20">
+          <i className="ri-flashlight-line text-2xl" />
         </div>
         <div>
-          <p className="font-semibold text-surface-800 text-sm">Min Cash Flow Algorithm</p>
-          <p className="text-xs text-surface-400">
-            <span className="text-brand-600 font-medium">{pendingCount} pending</span> ·{" "}
-            <span className="text-emerald-600 font-medium">{completedCount} settled</span> ·{" "}
-            {settlements.length} total transfers
+          <h3 className="font-bold text-sm tracking-wide">Min Cash Flow Algorithm Active</h3>
+          <p className="text-[11px] text-indigo-200 mt-1.5 leading-relaxed pr-4">
+            SplitRight automatically minimizes the number of transactions required within your groups to settle debts optimally. The settlements shown below represent the absolute minimum paths to clear all balances.
           </p>
         </div>
       </div>
 
-      {/* Settlement Cards */}
-      {settlements.length === 0 ? (
-        <div className="glass-card p-10 text-center mb-6">
-          <div className="w-16 h-16 rounded-2xl bg-surface-100 flex items-center justify-center mx-auto mb-4">
-            <i className="ri-exchange-funds-line text-surface-400 text-2xl" />
+      {/* Settlements List */}
+      <div className="space-y-4 pt-2">
+        {settlements.length === 0 ? (
+          <div className="bg-white border border-surface-200 rounded-2xl p-10 text-center shadow-sm">
+            <div className="w-16 h-16 rounded-2xl bg-surface-100 flex items-center justify-center mx-auto mb-4">
+              <i className="ri-exchange-funds-line text-surface-400 text-2xl" />
+            </div>
+            <p className="text-surface-600 font-medium mb-1">No settlements yet</p>
+            <p className="text-surface-400 text-[11px] max-w-sm mx-auto">
+              If you have outstanding balanced inside groups, they will appear here as optimized settlement tasks. You can also manually create requests.
+            </p>
           </div>
-          <p className="text-surface-600 font-medium mb-1">No settlements yet</p>
-          <p className="text-surface-400 text-sm mb-4">
-            Click <strong>"New Settlement"</strong> above to create one, or add expenses to groups with 2+ members.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-4 mb-10">
-          {settlements.map((s) => {
-            const fromName = s.from_user?.display_name || s.from_user?.email?.split("@")[0] || "—";
-            const toName = s.to_user?.display_name || s.to_user?.email?.split("@")[0] || "—";
+        ) : (
+          settlements.map((s) => {
+            const fromName = s.from_user?.display_name || s.from_user?.email?.split("@")[0] || "Someone";
+            const toName = s.to_user?.display_name || s.to_user?.email?.split("@")[0] || "Someone";
             return (
-              <div key={s.id} className="glass-card overflow-hidden">
-                {/* Settlement Info */}
-                <div className="p-5 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-9 h-9 rounded-full bg-rose-100 flex items-center justify-center text-xs font-bold text-rose-600">
-                        {fromName[0]?.toUpperCase()}
+              <div key={s.id} className="bg-white border border-surface-200 rounded-2xl overflow-hidden shadow-sm flex flex-col md:flex-row md:items-stretch transition-shadow hover:shadow-md">
+                
+                {/* Info Block */}
+                <div className="flex-1 p-5 border-b md:border-b-0 md:border-r border-surface-100 flex flex-col justify-center bg-surface-50/30">
+                  <div className="flex items-center justify-between gap-6">
+                    <div className="flex items-center gap-3 w-full">
+                      <div className="flex flex-col items-center">
+                        <div className="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center text-[10px] font-bold text-rose-600 border border-rose-200">
+                          {fromName[0]?.toUpperCase()}
+                        </div>
+                        <span className="text-[10px] font-bold text-surface-600 mt-1 max-w-[60px] truncate text-center">{fromName}</span>
                       </div>
-                      <span className="text-sm font-medium text-surface-700">{fromName}</span>
-                    </div>
-                    <i className="ri-arrow-right-line text-surface-300" />
-                    <div className="flex items-center gap-2">
-                      <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-xs font-bold text-emerald-600">
-                        {toName[0]?.toUpperCase()}
+                      
+                      <div className="flex-1 flex flex-col justify-center items-center h-full relative">
+                        <div className="w-full h-px bg-surface-300 absolute top-1/2 -translate-y-1/2 z-0"></div>
+                        <span className="relative z-10 bg-white px-2 py-0.5 rounded-md border border-surface-200 text-[10px] font-bold text-surface-500 uppercase tracking-wider flex items-center gap-1">
+                          <i className="ri-arrow-right-line" /> Pays
+                        </span>
                       </div>
-                      <span className="text-sm font-medium text-surface-700">{toName}</span>
+                      
+                      <div className="flex flex-col items-center">
+                        <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-[10px] font-bold text-emerald-600 border border-emerald-200">
+                          {toName[0]?.toUpperCase()}
+                        </div>
+                        <span className="text-[10px] font-bold text-surface-600 mt-1 max-w-[60px] truncate text-center">{toName}</span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-lg font-bold text-surface-800">{formatCurrency(s.amount)}</p>
-                    <p className="text-xs text-surface-400">{s.notes || "Settlement"}</p>
+
+                    <div className="text-right shrink-0">
+                      <p className="text-xl font-extrabold text-surface-900 tracking-tight">{formatCurrency(s.amount)}</p>
+                      <p className="text-[10px] font-bold text-surface-400 capitalize">{s.notes || "Settlement"}</p>
+                    </div>
                   </div>
                 </div>
 
-                {/* Payment Buttons — ALWAYS VISIBLE for pending settlements */}
-                {s.status === "pending" ? (
-                  <div className="px-5 pb-5 border-t border-surface-100 pt-4">
-                    <p className="text-xs font-semibold text-surface-500 uppercase tracking-wider mb-3">
-                      Pay via
-                    </p>
-                    <div className="grid grid-cols-3 gap-3">
-                      {/* Razorpay */}
+                {/* Actions Block */}
+                <div className="p-4 bg-white flex flex-col justify-center min-w-[280px]">
+                  {s.status === "pending" ? (
+                    <div className="grid grid-cols-3 gap-2">
                       <button
                         onClick={() => handleRazorpayPay(s)}
                         disabled={payingId === s.id}
-                        className="p-3 rounded-xl border-2 border-surface-100 hover:border-blue-400 hover:bg-blue-50 transition-all text-center group disabled:opacity-50"
+                        className="flex flex-col items-center justify-center p-2 rounded-xl border border-surface-200 hover:border-indigo-400 hover:bg-indigo-50 transition-colors group disabled:opacity-50"
+                        title="Razorpay (Cards, NetBanking, UPI)"
                       >
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
-                          <i className="ri-bank-card-line text-white text-lg" />
-                        </div>
-                        <p className="text-xs font-semibold text-surface-700">
-                          {payingId === s.id ? "Processing..." : "Razorpay"}
-                        </p>
-                        <p className="text-[10px] text-surface-400">Cards · NetBanking · Wallets</p>
+                        <i className={`text-xl mb-1 ${payingId === s.id ? 'ri-loader-4-line animate-spin text-indigo-500' : 'ri-bank-card-fill text-indigo-500 group-hover:scale-110 transition-transform'}`} />
+                        <span className="text-[10px] font-bold text-surface-600">{payingId === s.id ? 'Wait...' : 'Razorpay'}</span>
                       </button>
 
-                      {/* UPI */}
                       <button
                         onClick={() => handleUPIPay(s)}
-                        className="p-3 rounded-xl border-2 border-surface-100 hover:border-emerald-400 hover:bg-emerald-50 transition-all text-center group"
+                        className="flex flex-col items-center justify-center p-2 rounded-xl border border-surface-200 hover:border-emerald-400 hover:bg-emerald-50 transition-colors group"
+                        title="Direct UPI (GPay, PhonePe)"
                       >
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
-                          <i className="ri-smartphone-line text-white text-lg" />
-                        </div>
-                        <p className="text-xs font-semibold text-surface-700">UPI</p>
-                        <p className="text-[10px] text-surface-400">GPay · PhonePe · Paytm</p>
+                        <i className="ri-smartphone-fill text-emerald-500 text-xl mb-1 group-hover:scale-110 transition-transform" />
+                        <span className="text-[10px] font-bold text-surface-600">UPI App</span>
                       </button>
 
-                      {/* Manual */}
                       <button
                         onClick={() => handleMarkPaid(s.id)}
-                        className="p-3 rounded-xl border-2 border-surface-100 hover:border-amber-400 hover:bg-amber-50 transition-all text-center group"
+                        className="flex flex-col items-center justify-center p-2 rounded-xl border border-surface-200 hover:border-amber-400 hover:bg-amber-50 transition-colors group"
+                        title="Mark as paid manually"
                       >
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
-                          <i className="ri-hand-coin-line text-white text-lg" />
-                        </div>
-                        <p className="text-xs font-semibold text-surface-700">Mark Paid</p>
-                        <p className="text-[10px] text-surface-400">Cash · Bank Transfer</p>
+                        <i className="ri-hand-coin-fill text-amber-500 text-xl mb-1 group-hover:scale-110 transition-transform" />
+                        <span className="text-[10px] font-bold text-surface-600">Mark Paid</span>
                       </button>
                     </div>
-                  </div>
-                ) : (
-                  <div className="px-5 pb-4 border-t border-surface-100 pt-3 flex items-center gap-2">
-                    <span className="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 text-xs font-semibold">
-                      <i className="ri-check-double-line mr-1" />
-                      Settled
-                    </span>
-                    {s.completed_at && (
-                      <span className="text-xs text-surface-400">
-                        on {new Date(s.completed_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                      </span>
-                    )}
-                  </div>
-                )}
+                  ) : (
+                    <div className="h-full flex items-center justify-center">
+                      <div className="bg-emerald-50 border border-emerald-100 px-4 py-2 rounded-xl flex items-center justify-center gap-2 text-emerald-700 font-bold text-xs uppercase tracking-wider w-full text-center">
+                        <i className="ri-check-double-line text-lg" />
+                        <span>Completed</span>
+                        {s.completed_at && (
+                          <span className="text-[10px] font-medium opacity-70 ml-1 lowercase tracking-normal">
+                             ({new Date(s.completed_at).toLocaleDateString("en-IN", { month: "short", day: "numeric" })})
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             );
-          })}
+          })
+        )}
+      </div>
+
+      {/* Manual Settlement Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-white max-w-sm w-full rounded-2xl shadow-xl overflow-hidden animate-slide-up">
+            <div className="p-4 border-b border-surface-100 bg-surface-50 flex items-center justify-between">
+              <h3 className="font-bold text-surface-900 flex items-center gap-2">
+                <i className="ri-hand-coin-line text-indigo-500" /> New Settlement Check
+              </h3>
+              <button onClick={() => setShowCreateModal(false)} className="text-surface-400 hover:text-surface-600 transition-colors">
+                <i className="ri-close-line text-xl" />
+              </button>
+            </div>
+            <div className="p-5">
+              <form onSubmit={handleCreateSettlement} className="space-y-4">
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-surface-500 block mb-1">Who owes you? (Email)</label>
+                  <input type="email" placeholder="friend@example.com" value={newSettlement.email}
+                    onChange={(e) => setNewSettlement({ ...newSettlement, email: e.target.value })} required
+                    className="w-full px-4 py-2 bg-surface-50 border border-surface-200 rounded-lg focus:border-indigo-400 outline-none text-sm transition-colors" />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-surface-500 block mb-1">Amount (₹)</label>
+                  <input type="number" placeholder="0.00" value={newSettlement.amount} min="1"
+                    onChange={(e) => setNewSettlement({ ...newSettlement, amount: e.target.value })} required
+                    className="w-full px-4 py-2 bg-surface-50 border border-surface-200 rounded-lg focus:border-indigo-400 outline-none text-sm transition-colors text-indigo-700 font-bold" />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-surface-500 block mb-1">Group</label>
+                  <select value={newSettlement.groupId}
+                    onChange={(e) => setNewSettlement({ ...newSettlement, groupId: e.target.value })} required
+                    className="w-full px-4 py-2 bg-surface-50 border border-surface-200 rounded-lg focus:border-indigo-400 outline-none text-sm transition-colors appearance-none">
+                    {groups.length === 0 ? (
+                      <option value="">No groups</option>
+                    ) : (
+                      groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)
+                    )}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-surface-500 block mb-1">Note (Optional)</label>
+                  <input type="text" placeholder="e.g. Dinner split" value={newSettlement.notes}
+                    onChange={(e) => setNewSettlement({ ...newSettlement, notes: e.target.value })}
+                    className="w-full px-4 py-2 bg-surface-50 border border-surface-200 rounded-lg focus:border-indigo-400 outline-none text-sm transition-colors" />
+                </div>
+                
+                <div className="pt-2">
+                  <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-lg transition-colors text-sm shadow-sm">
+                    Create Request
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Payment Methods Info — Always Visible */}
-      <div className="glass-card p-6">
-        <h2 className="text-lg font-semibold text-surface-800 mb-4">
-          Supported Payment Methods
-        </h2>
-        <div className="grid sm:grid-cols-3 gap-4">
-          <div className="p-4 rounded-xl border border-surface-100 hover:border-brand-200 transition-all">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center mb-3">
-              <i className="ri-bank-card-line text-white text-lg" />
-            </div>
-            <p className="text-sm font-semibold text-surface-700">Razorpay</p>
-            <p className="text-xs text-surface-400">Credit/Debit Cards, NetBanking, Wallets, UPI via Razorpay checkout</p>
-          </div>
-          <div className="p-4 rounded-xl border border-surface-100 hover:border-brand-200 transition-all">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mb-3">
-              <i className="ri-smartphone-line text-white text-lg" />
-            </div>
-            <p className="text-sm font-semibold text-surface-700">UPI Direct</p>
-            <p className="text-xs text-surface-400">Opens GPay, PhonePe, or Paytm directly on your phone via UPI deep-link</p>
-          </div>
-          <div className="p-4 rounded-xl border border-surface-100 hover:border-brand-200 transition-all">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center mb-3">
-              <i className="ri-hand-coin-line text-white text-lg" />
-            </div>
-            <p className="text-sm font-semibold text-surface-700">Manual / Cash</p>
-            <p className="text-xs text-surface-400">Paid offline? Mark the settlement as completed manually</p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

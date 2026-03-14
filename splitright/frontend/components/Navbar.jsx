@@ -53,7 +53,7 @@ const Navbar = ({ user, toggleLogin }) => {
             <div className="nav-container">
                 {/* Logo Section */}
                 <Link href="/" className="logoGroup">
-                    <img src="/logo.png" alt="PDEU Logo" style={{ height: '80px', width: 'auto' }} />
+                    <img src="/d877cd1e-7c48-4499-a7a2-4c493cfdc64d-removebg-preview.png" alt="SplitRight Logo" style={{ height: '80px', width: 'auto' }} />
                 </Link>
 
                 {/* Hamburger for Mobile */}

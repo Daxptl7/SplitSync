@@ -1,4 +1,4 @@
-// File: /Users/hilagshah/Desktop/optiSplit/SplitSync/splitright/frontend/app/(app)/groups/page.js
+// File: /Users/daxpatel/Desktop/Breach/SplitSync/splitright/frontend/app/(app)/groups/page.js
 import * as entry from '../../../../../app/(app)/groups/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

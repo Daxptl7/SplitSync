@@ -50,9 +50,11 @@ export default function AppLayout({ children }) {
         {/* Top bar for mobile */}
         <div className="lg:hidden sticky top-0 z-30 glass px-4 py-3 flex items-center justify-between border-b border-surface-100 bg-white/80 backdrop-blur-md">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-600 to-accent-teal flex items-center justify-center text-white font-bold text-sm">
-              S
-            </div>
+            <img 
+              src="/d877cd1e-7c48-4499-a7a2-4c493cfdc64d-removebg-preview.png" 
+              alt="SplitRight Logo" 
+              className="w-8 h-8 object-cover rounded-lg shadow-sm"
+            />
             <span className="font-bold text-surface-900">
               Split<span className="gradient-text">Right</span>
             </span>
