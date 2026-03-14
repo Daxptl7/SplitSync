@@ -38,6 +38,7 @@ export default function RootLayout({ children }) {
           href="https://cdn.jsdelivr.net/npm/remixicon@4.9.0/fonts/remixicon.css"
           rel="stylesheet"
         />
+        <script src="https://checkout.razorpay.com/v1/checkout.js" async />
       </head>
       <body>
         <AuthProvider>{children}</AuthProvider>

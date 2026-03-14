@@ -1,3 +1,4 @@
+from datetime import date
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -28,5 +29,36 @@ class Expense(models.Model):
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     split_type = models.CharField(max_length=50, default='equal')
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-    date = models.DateField(auto_now_add=True)
+    date = models.DateField(default=date.today)
     created_at = models.DateTimeField(auto_now_add=True)
+
+class Settlement(models.Model):
+    STATUS_CHOICES = (
+        ('pending', 'Pending'),
+        ('completed', 'Completed'),
+    )
+    group = models.ForeignKey(Group, related_name='settlements', on_delete=models.CASCADE)
+    from_user = models.ForeignKey(User, related_name='settlements_owed', on_delete=models.CASCADE)
+    to_user = models.ForeignKey(User, related_name='settlements_owed_to', on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    notes = models.CharField(max_length=255, blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+class PaymentLog(models.Model):
+    STATUS_CHOICES = (
+        ('created', 'Created'),
+        ('paid', 'Paid'),
+        ('failed', 'Failed'),
+    )
+    settlement = models.ForeignKey(Settlement, related_name='payments', on_delete=models.CASCADE)
+    razorpay_order_id = models.CharField(max_length=100, unique=True)
+    razorpay_payment_id = models.CharField(max_length=100, blank=True, default='')
+    razorpay_signature = models.CharField(max_length=255, blank=True, default='')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=3, default='INR')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='created')
+    paid_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)

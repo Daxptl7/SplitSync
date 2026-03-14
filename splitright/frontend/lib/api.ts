@@ -1,12 +1,9 @@
 import axios from "axios";
 import { auth } from "./firebase";
 
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8001";
-// Force IPv4 loopback to avoid IPv6 connection issues with Django runserver
-const baseURL = backendUrl.replace('localhost', '127.0.0.1');
-
+// Use relative URLs so all API requests go through the Next.js rewrite proxy
+// The proxy in next.config.js forwards /api/v1/* to the Django backend
 const api = axios.create({
-  baseURL,
   timeout: 15000,
   headers: {
     "Content-Type": "application/json",
@@ -32,9 +29,9 @@ api.interceptors.response.use(
   (res) => res,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired — redirect to login
+      // Token expired or invalid — redirect to login
       if (typeof window !== "undefined") {
-        window.location.href = "/";
+        window.location.href = "/login";
       }
     }
     return Promise.reject(error);

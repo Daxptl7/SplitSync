@@ -1,4 +1,4 @@
-// File: /Users/daxpatel/Desktop/Project/WebDevlopment/Genesis/splitright/frontend/app/layout.js
+// File: /Users/hilagshah/Desktop/optiSplit/SplitSync/splitright/frontend/app/layout.js
 import * as entry from '../../../app/layout.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

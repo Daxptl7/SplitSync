@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Sidebar from "@/components/Sidebar";
@@ -8,12 +8,18 @@ import Sidebar from "@/components/Sidebar";
 export default function AppLayout({ children }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
       router.push("/login");
     }
   }, [user, loading, router]);
+
+  // Close mobile menu when Route changes
+  useEffect(() => {
+      setIsMobileMenuOpen(false);
+  }, [children]);
 
   if (loading) {
     return (
@@ -26,11 +32,23 @@ export default function AppLayout({ children }) {
   if (!user) return null;
 
   return (
-    <div className="flex min-h-screen bg-surface-50">
-      <Sidebar />
-      <main className="flex-1 overflow-y-auto">
+    <div className="flex min-h-screen bg-surface-50 relative">
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar Container */}
+      <div className={`fixed inset-y-0 left-0 z-50 transform lg:transform-none lg:static transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+          <Sidebar />
+      </div>
+
+      <main className="flex-1 w-full lg:min-w-0 overflow-y-auto">
         {/* Top bar for mobile */}
-        <div className="lg:hidden sticky top-0 z-40 glass px-4 py-3 flex items-center justify-between border-b border-surface-100">
+        <div className="lg:hidden sticky top-0 z-30 glass px-4 py-3 flex items-center justify-between border-b border-surface-100 bg-white/80 backdrop-blur-md">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-600 to-accent-teal flex items-center justify-center text-white font-bold text-sm">
               S
@@ -39,7 +57,10 @@ export default function AppLayout({ children }) {
               Split<span className="gradient-text">Right</span>
             </span>
           </div>
-          <button className="p-2 rounded-lg hover:bg-surface-100">
+          <button 
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 rounded-lg hover:bg-surface-100 transition-colors"
+          >
             <i className="ri-menu-line text-xl text-surface-600" />
           </button>
         </div>

@@ -79,7 +79,7 @@ export default function ExpensesPage() {
 
     try {
       await api.post("/api/v1/expenses/", {
-        group: newGroupId,
+        group_id: newGroupId,
         description: newDesc,
         total_amount: parseFloat(newAmount),
         split_type: selectedSplit,

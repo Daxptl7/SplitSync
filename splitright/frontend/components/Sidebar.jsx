@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 
 const NAV_ITEMS = [
   { href: '/dashboard', icon: 'ri-dashboard-line', label: 'Dashboard' },
@@ -14,9 +15,23 @@ const NAV_ITEMS = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, logout } = useAuth();
+  
+  const handleLogout = async () => {
+      try {
+          await logout();
+          router.push("/");
+      } catch (error) {
+          console.error("Failed to log out", error);
+      }
+  };
+
+  const initial = user?.display_name?.[0] || user?.email?.[0] || "U";
+  const name = user?.display_name || user?.email?.split("@")[0] || "User";
 
   return (
-    <aside className="hidden lg:flex flex-col w-64 h-screen sticky top-0 bg-white border-r border-surface-100 py-6 px-4">
+    <aside className="flex flex-col w-64 h-screen sticky top-0 bg-white border-r border-surface-100 py-6 px-4">
       {/* Logo */}
       <Link href="/" className="flex items-center gap-2 px-3 mb-8 group">
         <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-600 to-accent-teal flex items-center justify-center text-white font-bold text-lg shadow-md group-hover:scale-105 transition-transform">
@@ -48,12 +63,24 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Bottom */}
+      {/* User Profile & Logout */}
       <div className="mt-auto pt-4 border-t border-surface-100">
-        <div className="px-3 py-2 rounded-xl bg-gradient-to-r from-brand-50 to-teal-50 border border-brand-100">
-          <p className="text-xs font-semibold text-brand-700 mb-0.5">Free Plan</p>
-          <p className="text-[11px] text-surface-400">Unlimited splits &amp; groups</p>
+        <div className="flex items-center gap-3 px-2 py-2 mb-2">
+            <div className="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-sm shrink-0">
+                {initial.toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-surface-800 truncate">{name}</p>
+                <p className="text-xs text-surface-500 truncate">{user?.email}</p>
+            </div>
         </div>
+        <button 
+            onClick={handleLogout}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium text-rose-600 hover:bg-rose-50 transition-colors"
+        >
+            <i className="ri-logout-box-r-line text-lg" />
+            Logout
+        </button>
       </div>
     </aside>
   );

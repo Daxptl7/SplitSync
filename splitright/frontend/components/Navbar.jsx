@@ -72,11 +72,7 @@ const Navbar = ({ user, toggleLogin }) => {
                     {user ? (
                         <>
                             <li><Link href="/profile" className="menuLink">Profile</Link></li>
-                            {user.role === 'admin' ? (
-                                <li><Link href="/admin-dashboard" className="menuLink">Admin Dashboard</Link></li>
-                            ) : (
-                                <li><Link href="/farmer-dashboard" className="menuLink">Dashboard</Link></li>
-                            )}
+                            <li><Link href="/dashboard" className="menuLink">Dashboard</Link></li>
                             <li>
                                 <button onClick={handleLogout} className="auth-btn">Logout</button>
                             </li>

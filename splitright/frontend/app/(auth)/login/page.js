@@ -8,7 +8,6 @@ import "./Login.css";
 
 function LoginForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { user, loginWithEmail, loginWithGoogle } = useAuth();
 
   const [formData, setFormData] = useState({
@@ -172,7 +171,7 @@ function LoginForm() {
               <div className="signup-text">
                 <p>
                   Don't have an account?{" "}
-                  <Link href="/login?signup=true" className="signup-link">
+                  <Link href="/signup" className="signup-link">
                     Sign up
                   </Link>
                 </p>
